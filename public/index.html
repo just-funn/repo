@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>URL Checker — Safe • Suspicious • Danger</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <meta name="description" content="Check if a URL is safe, suspicious, or dangerous with heuristics and optional VirusTotal checks." />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <img src="/logo.svg" alt="URL Checker logo" class="logo" />
+      <div>
+        <h1>URL Checker</h1>
+        <p class="tagline">Quickly classify URLs as Safe, Suspicious, or Danger</p>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="checker">
+      <form id="checkForm" class="form">
+        <label for="urlInput">Enter URL to check</label>
+        <div class="inputRow">
+          <input id="urlInput" name="url" placeholder="https://example.com/login" aria-label="URL input" required />
+          <button type="submit" class="btn primary">Check</button>
+        </div>
+        <div class="examples">
+          Examples:
+          <button type="button" class="example">https://github.com</button>
+          <button type="button" class="example">http://bit.ly/3example</button>
+          <button type="button" class="example">phishy-login.example.com</button>
+        </div>
+      </form>
+
+      <div id="resultCard" class="card hidden">
+        <div class="summary">
+          <div>
+            <div id="verdictBadge" class="badge">—</div>
+            <h2 id="normalizedUrl">—</h2>
+            <div id="scoreText" class="score">Score: 0</div>
+          </div>
+          <div class="actions">
+            <button id="copyBtn" class="btn">Copy</button>
+            <button id="shareBtn" class="btn">Share</button>
+          </div>
+        </div>
+
+        <div id="checks" class="checks"></div>
+        <details>
+          <summary>Raw details</summary>
+          <pre id="raw"></pre>
+        </details>
+      </div>
+    </section>
+
+    <aside class="history">
+      <h3>History</h3>
+      <ul id="historyList"></ul>
+    </aside>
+  </main>
+
+  <footer class="footer">
+    <small>Built with heuristics. For production, add API keys for VirusTotal / Google Safe Browsing for higher confidence.</small>
+  </footer>
+
+  <script src="/app.js"></script>
+</body>
+</html>
