@@ -1,6 +1,5 @@
 const express = require('express');
 const path = require('path');
-const fetch = require('node-fetch');
 const dns = require('dns').promises;
 const cors = require('cors');
 
@@ -11,7 +10,6 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-const VT_API_KEY = process.env.VIRUSTOTAL_API_KEY || '';
 const PORT = process.env.PORT || 3000;
 
 // Helper: simple TLD list considered higher-risk (heuristic)
@@ -58,8 +56,7 @@ app.post('/api/check', async (req, res) => {
     score: 0,
     checks: [],
     verdict: 'unknown',
-    details: {},
-    vt: null
+    details: {}
   };
 
   // 1. Protocol check
@@ -141,47 +138,6 @@ app.post('/api/check', async (req, res) => {
     addCheck(result, 'Nonstandard port', 1, false, `Uses nonstandard port ${url.port} — unusual for public websites.`);
   }
 
-  // Optional: VirusTotal lookup (if API key provided)
-  if (VT_API_KEY) {
-    try {
-      // VirusTotal v3 URL analysis: POST to /urls -> then GET analysis
-      // Step 1: submit URL for analysis
-      const params = new URLSearchParams();
-      params.append('url', url.href);
-      const submitRes = await fetch('https://www.virustotal.com/api/v3/urls', {
-        method: 'POST',
-        headers: {
-          'x-apikey': VT_API_KEY,
-          'Content-Type': 'application/x-www-form-urlencoded'
-        },
-        body: params.toString()
-      });
-      const submitJson = await submitRes.json();
-      if (submitRes.ok && submitJson.data && submitJson.data.id) {
-        const vtId = submitJson.data.id;
-        // get analysis
-        await new Promise(r => setTimeout(r, 1200));
-        const analysisRes = await fetch(`https://www.virustotal.com/api/v3/analyses/${vtId}`, {
-          headers: { 'x-apikey': VT_API_KEY }
-        });
-        const analysisJson = await analysisRes.json();
-        result.vt = analysisJson;
-        // Heuristic: if any engine flags malicious, increase score
-        const stats = analysisJson.data && analysisJson.data.attributes && analysisJson.data.attributes.stats;
-        if (stats && (stats.malicious > 0 || stats.suspicious > 0)) {
-          addCheck(result, 'VirusTotal detection', 4, false, `VirusTotal reported ${stats.malicious} malicious and ${stats.suspicious} suspicious findings.`);
-        } else {
-          addCheck(result, 'VirusTotal check', 0, true, 'VirusTotal did not report detections.');
-        }
-      } else {
-        // gracefully ignore errors from VT
-        addCheck(result, 'VirusTotal lookup', 0, true, 'VirusTotal lookup could not be completed.');
-      }
-    } catch (err) {
-      addCheck(result, 'VirusTotal error', 0, true, 'VirusTotal lookup failed (error ignored).');
-    }
-  }
-
   // Final verdict thresholds
   let verdict = 'Safe';
   if (result.score >= 6) verdict = 'Danger';
@@ -196,5 +152,5 @@ app.get('*', (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`URL Checker running on http://localhost:${PORT}`);
+  console.log(`URL Checker (heuristics-only) running on http://localhost:${PORT}`);
 });
